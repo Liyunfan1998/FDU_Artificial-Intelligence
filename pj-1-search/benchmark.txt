@@ -1,0 +1,17 @@
+-l tinyCorners -p SearchAgent -a fn=bfs,prob=CornersProblem
+[SearchAgent] using function bfs
+[SearchAgent] using problem type CornersProblem
+Path found with total cost of 28 in 0.0 seconds
+Search nodes expanded: 252
+Score: 512
+Average Score: 512.0
+
+-l mediumCorners -p AStarCornersAgent -z 0.5
+Path found with total cost of 106 in 0.0 seconds
+Search nodes expanded: 1966
+Score: 434
+
+-l mediumCorners -p AStarCornersAgent -z 0.5
+Path found with total cost of 106 in 0.0 seconds
+Search nodes expanded: 502
+Score: 434.0

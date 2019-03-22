@@ -318,7 +318,7 @@ class CornersProblem(search.SearchProblem):
         """
         "*** YOUR CODE HERE ***"
         # util.raiseNotDefined()
-        # visited all the corners
+        # visited all the corners, corners=[]
         return len(state[1]) == 0
 
     def getSuccessors(self, state):
@@ -372,24 +372,39 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-    def cornersHeuristic(state, problem):
-        """
-        A heuristic for the CornersProblem that you defined.
 
-          state:   The current search state
-                   (a data structure you chose in your search problem)
+def cornersHeuristic(state, problem):
+    """
+    A heuristic for the CornersProblem that you defined.
 
-          problem: The CornersProblem instance for this layout.
+      state:   The current search state
+               (a data structure you chose in your search problem)
 
-        This function should always return a number that is a lower bound on the
-        shortest path from the state to a goal of the problem; i.e.  it should be
-        admissible (as well as consistent).
-        """
-        corners = problem.corners  # These are the corner coordinates
-        walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
+      problem: The CornersProblem instance for this layout.
 
-        "*** YOUR CODE HERE ***"
-        return 0  # Default to trivial solution
+    This function should always return a number that is a lower bound on the
+    shortest path from the state to a goal of the problem; i.e.  it should be
+    admissible (as well as consistent).
+    """
+    corners = problem.corners  # These are the corner coordinates
+    walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
+
+    "*** YOUR CODE HERE ***"
+    # Using sum of manhattanDistance to all corners as the heuristic function
+    currentPosition = state[0]
+    unvisitedCorners = list(state[1])
+    # distances = [0]
+    sum_dis = 0
+    for corner in unvisitedCorners:
+        dis = util.manhattanDistance(currentPosition, corner)
+        # distances.append(util.manhattanDistance(currentPosition, corner))
+        sum_dis += dis
+
+    # return max(distances)
+    # print(sum_dis)
+    return sum_dis
+    # return 0  # Default to trivial solution
+    # TODO (see if i can find a better h function to make Search nodes expanded smaller)
 
 
 class AStarCornersAgent(SearchAgent):

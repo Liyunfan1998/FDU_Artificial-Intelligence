@@ -74,7 +74,7 @@ def tinyMazeSearch(problem):
     return [s, s, w, s, w, w, s, w]
 
 
-def add2frontier(node, cost, type, frontier):
+def add2frontier(node, priority, type, frontier):
     if type == "PUSH_TWO":
         frontier.push(node, priority)
     elif type == "PUSH_ONE":
@@ -172,9 +172,9 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     # util.raiseNotDefined()
 
     # Using util.Queue to implement frontier in BFS
-    frontier = util.Queue()
-    heuristic(node[0], problem)  # heuristic(state, problem)
-    return genericSearch(problem, frontier, frontierAdd, heuristic, "PUSH_TWO")
+    frontier = util.PriorityQueue()
+    # heuristic(state, problem)
+    return genericSearch(problem, frontier, heuristic, "PUSH_TWO")
 
 
 # Abbreviations
