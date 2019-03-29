@@ -6,6 +6,44 @@ Search nodes expanded: 252
 Score: 512
 Average Score: 512.0
 
+-l mediumMaze -p SearchAgent
+Path found with total cost of 130 in 0.0 seconds
+Search nodes expanded: 146
+Scores:        380.0
+
+-l bigMaze -z .5 -p SearchAgent
+Path found with total cost of 210 in 0.0 seconds
+Search nodes expanded: 390
+Scores:        300.0
+
+
+-l mediumMaze -p SearchAgent -a fn=bfs
+Path found with total cost of 68 in 0.0 seconds
+Search nodes expanded: 269
+Score: 442.0
+
+-l bigMaze -p SearchAgent -a fn=bfs -z .5
+Path found with total cost of 210 in 0.0 seconds
+Search nodes expanded: 620
+Scores:        300.0
+
+
+
+-l mediumMaze -p SearchAgent -a fn=ucs
+Path found with total cost of 68 in 0.0 seconds
+Search nodes expanded: 269
+Scores:        442.0
+
+-l mediumDottedMaze -p StayEastSearchAgent
+Path found with total cost of 1 in 0.0 seconds
+Search nodes expanded: 186
+Scores:        646.0
+
+-l mediumScaryMaze -p StayWestSearchAgent
+Path found with total cost of 68719479864 in 0.0 seconds
+Search nodes expanded: 108
+Scores:        418.0
+
 -l mediumCorners -p AStarCornersAgent -z 0.5
 Path found with total cost of 106 in 0.0 seconds
 Search nodes expanded: 1966

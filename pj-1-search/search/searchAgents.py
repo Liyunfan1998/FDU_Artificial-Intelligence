@@ -390,7 +390,11 @@ def cornersHeuristic(state, problem):
     walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    # Using sum of manhattanDistance to all corners as the heuristic function
+    """
+    # 1.Using sum of manhattanDistance to all corners as the heuristic function
+    Search nodes expanded: 502,      Score: 434.0
+    However, this is inconsistent, but it can solve the test cases
+    
     currentPosition = state[0]
     unvisitedCorners = list(state[1])
     # distances = [0]
@@ -404,7 +408,37 @@ def cornersHeuristic(state, problem):
     # print(sum_dis)
     return sum_dis
     # return 0  # Default to trivial solution
+    """
     # TODO (see if i can find a better h function to make Search nodes expanded smaller)
+
+    #  2.Adding the distance of closest corner and updating self location to closest corner
+    #  repeat until all corners have been visited
+    #
+    #  while unvisitedCorners is not empty, find the nearest corner; calc MHdistance;
+    #  then remove the corner from unvisitedCorners; update sum by adding MHdistance to sum;
+    #  repeat untill isGoalState(all corners has been explored)
+    #
+    #  Consistent!
+    #  Search nodes expanded: 692, Score: 434
+
+    currentPosition = state[0]
+    # state[1] is passed in as a tuple, we transform it into a list
+    unvisitedCorners = list(state[1])
+    sum = 0
+
+    while len(unvisitedCorners):
+        cornerDistance = []
+        for corner in unvisitedCorners:
+            distance = util.manhattanDistance(currentPosition, corner)
+            cornerDistance.append((distance, corner))
+        # find the closest corner
+        currentDistance, currentCorner = min(cornerDistance)
+        sum += currentDistance
+        # move to the closest corner
+        currentPosition = currentCorner
+        unvisitedCorners.remove(currentCorner)
+
+    return sum
 
 
 class AStarCornersAgent(SearchAgent):
@@ -539,7 +573,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
