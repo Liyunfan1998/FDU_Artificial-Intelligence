@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -93,7 +93,7 @@ def genericSearch(problem, frontier, heuristic=0, push_type="PUSH_ONE"):
     explored = set()
 
     if frontier.isEmpty():
-        raise Exception('no element in frontier!')
+        raise Exception('frontier isEmpty!')
     while not frontier.isEmpty():
         # pop out a node from frontier each time to carry our search on its child-nodes
         (state, cost, path) = frontier.pop()
@@ -112,7 +112,7 @@ def genericSearch(problem, frontier, heuristic=0, push_type="PUSH_ONE"):
                 h = heuristic(child_node[0], problem)
                 add2frontier(child_node, child_cost + h, push_type, frontier)
 
-    return "There is nothing in frontier. Failure!"
+    return "frontier isEmpty!"
 
 
 def depthFirstSearch(problem):

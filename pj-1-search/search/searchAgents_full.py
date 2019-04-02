@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-#
+# 
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -394,7 +394,7 @@ def cornersHeuristic(state, problem):
     # 1.Using sum of manhattanDistance to all corners as the heuristic function
     Search nodes expanded: 502,      Score: 434.0
     However, this is inconsistent, but it can solve the test cases
-
+    
     currentPosition = state[0]
     unvisitedCorners = list(state[1])
     # distances = [0]
@@ -448,6 +448,41 @@ class AStarCornersAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
         self.searchType = CornersProblem
 
+class FoodSearchProblem3:
+    """
+    A search problem associated with finding the a path that collects all of the
+    food (dots) in a Pacman game.
+    A search state in this problem is a tuple ( pacmanPosition, foodGrid ) where
+      pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
+      foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
+    """
+    def __init__(self, startingGameState):
+        self.start = (startingGameState.getPacmanPosition(), startingGameState.getFood())
+        self.walls = startingGameState.getWalls()
+        self.startingGameState = startingGameState
+        self._expanded = 0 # DO NOT CHANGE
+        self.heuristicInfo = {} # A dictionary for the heuristic to store information
+
+    def getStartState(self):
+        return self.start
+
+    def isGoalState(self, state):
+        return state[1].count() == 0
+
+    def getSuccessors(self, state):
+        "Returns successor states, the actions they require, and a cost of 1."
+        successors = []
+        self._expanded += 1 # DO NOT CHANGE
+        for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x,y = state[0]
+            dx, dy = Actions.directionToVector(direction)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextFood = state[1].copy()
+                nextFood[nextx][nexty] = False
+                successors.append( ( ((nextx, nexty), nextFood), direction, 1) )
+        return successors
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -470,11 +505,53 @@ def foodHeuristic(state, problem):
     value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
-    """
-    """
-    My final implementation:
+    Robin Implementation 1: gives quick result for tricky, but fails autograder test 15
+    position, foodGrid = state
+    toVisit = foodGrid.asList()
+    total = 0
+    visited = []
+    firstMin = 99999
+    firstNode = (-1, -1)
+    #find food nearest to initial position
+    gameState = problem.startingGameState
+    for adj in toVisit:
+        if adj not in visited:
+            dist = mazeDistance(position, adj,gameState)
+            if (dist < firstMin) and dist >= 0:
+                firstNode = adj
+                firstMin = dist
+    curPos = (firstNode,firstMin)
+    while(len(toVisit) > 0):
+        curMin = 99999
+        curNode = (-1, -1)
+        toVisit.remove(curPos[0])
+        for adj in toVisit:
+            if adj not in visited:
+                dist = mazeDistance(curPos[0],adj,gameState)
+                if(dist < curMin) and dist >= 0:
+                    curNode = adj
+                    curMin = dist
+        visited.append(curPos);
+        curPos = (curNode,curMin)
+    for i in visited:
+        total+= i[1]
+    return total
+    Robin Second implementation:
+    TL;DR
     Using priority queue to find the shortest maze distance between unconnected foodNodes,creating a minimum spanning tree and finally
     joining the minimum spanned tree to pacman position via the shortest path. The total cost of this minimum spanning tree acts as heuristic value.
+
+    Presented below is a heuristic function that takes the actual distance between the 2 food points (considering the walls and other conditions), instead of manhattan
+    distance, to find out accurately the distance of 2 points in maze. We used this distances between each node to create a form of minimum
+    spanning tree (using priority queue to pick up least weighted edges in each iteration). Finally, when all the food nodes were connected,
+    we found the nearest food item from pacman position and hence added the pacman to the tree.
+    The total distance of this minimum spanning tree acted as an admissible and consistent heuristic because minimum spanning tree for the food
+    grid gave us the minimum distance the pacman MUST cover, in order to eat (visit) all the food items, and did not overestimate the distance at
+    any times.
+    To further refine our heuristic and make it faster, we created a dictionary mapping of the mazeDistance between 2 nodes and saved the
+    calculated distances in the dictionary. Our source and destination index being key (as tuples), the distance being value.
+    Both source,dest and dest,source key were inserted once the distance was calculated. This helped us in saving close to 2 seconds of
+    recalculation time.
     """
     position, foodGrid = state
     toVisit = foodGrid.asList()
@@ -549,6 +626,57 @@ def foodHeuristic(state, problem):
 
     return total + curMin
 
+class FoodSearchProblem2:
+    """
+    A search problem associated with finding the a path that collects all of the
+    food (dots) in a Pacman game.
+
+    A search state in this problem is a tuple ( pacmanPosition, foodGrid ) where
+      pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
+      foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
+    """
+
+    def __init__(self, startingGameState):
+        self.start = (startingGameState.getPacmanPosition(), startingGameState.getFood())
+        self.walls = startingGameState.getWalls()
+        self.startingGameState = startingGameState
+        self._expanded = 0  # DO NOT CHANGE
+        self.heuristicInfo = {}  # A dictionary for the heuristic to store information
+
+    def getStartState(self):
+        return self.start
+
+    def isGoalState(self, state):
+        return state[1].count() == 0
+
+    def getSuccessors(self, state):
+        "Returns successor states, the actions they require, and a cost of 1."
+        successors = []
+        self._expanded += 1  # DO NOT CHANGE
+        for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = state[0]
+            dx, dy = Actions.directionToVector(direction)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextFood = state[1].copy()
+                nextFood[nextx][nexty] = False
+                successors.append((((nextx, nexty), nextFood), direction, 1))
+        return successors
+
+    def getCostOfActions(self, actions):
+        """Returns the cost of a particular sequence of actions.  If those actions
+        include an illegal move, return 999999"""
+        x, y = self.getStartState()[0]
+        cost = 0
+        for action in actions:
+            # figure out the next state and see whether it's legal
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]:
+                return 999999
+            cost += 1
+        return cost
+
 class FoodSearchProblem:
     """
     A search problem associated with finding a path that collects all of the
@@ -611,6 +739,363 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+class MyPositionSearchProblem(PositionSearchProblem):
+    """
+    Inherit from `PositionSearchProblem`, allowing walls as a parameter.
+    """
+
+    def __init__(self, start, goal, walls):
+        self.walls = walls
+        self.startState = start
+        self.goal = goal
+        self.costFn = lambda x: 1
+        self.visualize = False
+
+        self._visited, self._visitedlist, self._expanded = {}, [], 0  # DO NOT CHANGE
+
+
+class FoodSubSearchState:
+    def __init__(self, position, leftFood):
+        self._position = position
+        self._leftFood = leftFood
+
+    @property
+    def position(self):
+        return self._position
+
+    @property
+    def leftFood(self):
+        return self._leftFood
+
+    def __eq__(self, other):
+        return self.position == other.position and self.leftFood == other.leftFood
+
+
+class FoodSubSearchProblem:
+    """
+    A search problem associated with finding the a path that collects all of the
+    food (dots) in a Pacman game.
+    A search state in this problem is a tuple ( pacmanPosition, foodGrid ) where
+      pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
+      foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
+    """
+
+    def __init__(self, pacmanPostion, leftFood, verticalWalls, horizontalWalls):
+        self.food = leftFood
+        self.start = FoodSubSearchState(pacmanPostion, leftFood)
+        self.verticalWalls = verticalWalls
+        self.horizontalWalls = horizontalWalls
+        self._expanded = 0  # DO NOT CHANGE
+        self._result = []
+        self._checked = {}
+
+    @property
+    def result(self):
+        return self._result
+
+    @result.setter
+    def result(self, result):
+        self._result = result
+
+    def getStartState(self):
+        return self.start
+
+    def isGoalState(self, state):
+        return len(state.leftFood) == 0
+
+    def getSuccessors(self, state):
+        "Returns successor states, the actions they require, and a cost of 1."
+        successors = []
+        self._expanded += 1  # DO NOT CHANGE
+        shortDistance = 99999
+        shortNode = None
+        for food in state.leftFood:
+            distance = 0
+            if (state.position, food) in self._checked or (
+                    food, state.position) in self._checked:
+                distance = self._checked[(state.position, food)]
+            else:
+                distance = manhattanDistanceWithWall(state.position, food,
+                                                     self.horizontalWalls,
+                                                     self.verticalWalls)
+                self._checked[(state.position, food)] = distance
+                self._checked[(food, state.position)] = distance
+            newLeftFood = state.leftFood[:]
+            newLeftFood.remove(food)
+            successors.append(
+                (FoodSubSearchState(food, newLeftFood), food, distance))
+        return successors
+
+    def getCostOfActions(self, actions):
+        return self.getCostOfActions(self.start.position, actions)
+
+    def getCostOfActions(self, currentPostion, actions):
+        """Returns the cost of a particular sequence of actions.  If those actions
+        include an illegal move, return 999999"""
+        start = currentPostion
+        cost = 0
+        for action in actions:
+            # figure out the next state and see whether it's legal
+            cost += manhattanDistanceWithWall(start, action,
+                                              self.horizontalWalls,
+                                              self.verticalWalls)
+            start = action
+        return cost
+
+def foodHeuristic2(state, problem):
+    """
+    Your heuristic for the FoodSearchProblem goes here.
+
+    This heuristic must be consistent to ensure correctness.  First, try to come
+    up with an admissible heuristic; almost all admissible heuristics will be
+    consistent as well.
+
+    If using A* ever finds a solution that is worse uniform cost search finds,
+    your heuristic is *not* consistent, and probably not admissible!  On the
+    other hand, inadmissible or inconsistent heuristics may find optimal
+    solutions, so be careful.
+
+    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
+    (see game.py) of either True or False. You can call foodGrid.asList() to get
+    a list of food coordinates instead.
+
+    If you want access to info like walls, capsules, etc., you can query the
+    problem.  For example, problem.walls gives you a Grid of where the walls
+    are.
+
+    If you want to *store* information to be reused in other calls to the
+    heuristic, there is a dictionary called problem.heuristicInfo that you can
+    use. For example, if you only want to count the walls once and store that
+    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
+    Subsequent calls to this heuristic can access
+    problem.heuristicInfo['wallCount']
+    """
+    position, foodGrid = state
+    "*** YOUR CODE HERE ***"
+    def getMazeDistance(start, end):
+        """
+        Returns the maze distance between any two points, using the search functions
+        you have already built.
+        """
+        try:
+            return problem.heuristicInfo[(start, end)]
+        except:
+            prob = MyPositionSearchProblem(start=start, goal=end, walls=problem.walls,visualize=False)
+            problem.heuristicInfo[(start, end)] = len(search.astar(prob))
+            return problem.heuristicInfo[(start, end)]
+
+    distances = []
+    distances_food = [0]
+    for food in foodGrid.asList():
+        distances.append(getMazeDistance(position, food))
+        for tofood in foodGrid.asList():
+            distances_food.append(getMazeDistance(food, tofood))
+
+    return min(distances) + max(distances_food) if len(distances) else max(distances_food)
+
+
+def foodHeuristic3(state, problem):
+    """
+    Your heuristic for the FoodSearchProblem goes here.
+
+    This heuristic must be consistent to ensure correctness.  First, try to come up
+    with an admissible heuristic; almost all admissible heuristics will be consistent
+    as well.
+
+    If using A* ever finds a solution that is worse uniform cost search finds,
+    your heuristic is *not* consistent, and probably not admissible!  On the other hand,
+    inadmissible or inconsistent heuristics may find optimal solutions, so be careful.
+
+    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a
+    Grid (see game.py) of either True or False. You can call foodGrid.asList()
+    to get a list of food coordinates instead.
+
+    If you want access to info like walls, capsules, etc., you can query the problem.
+    For example, problem.walls gives you a Grid of where the walls are.
+
+    If you want to *store* information to be reused in other calls to the heuristic,
+    there is a dictionary called problem.heuristicInfo that you can use. For example,
+    if you only want to count the walls once and store that value, try:
+      problem.heuristicInfo['wallCount'] = problem.walls.count()
+    Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
+    """
+    position, foodGrid = state
+    foods = foodGrid.asList()
+    num_foods = len(foods)
+    if num_foods == 0: return 0  # already found all food
+
+    # Find the closest food to the current position
+
+    # Tomcat's way using AnyFoodSearchProblem2
+    path = search.bfs(AnyFoodSearchProblem(state))
+    position_cost = len(path)
+
+    x, y = position
+    for action in path:
+        dx, dy = Actions.directionToVector(action)
+        x, y = int(x + dx), int(y + dy)
+    closestFood = (x, y)
+
+    for i, food in enumerate(foods):
+        if food == closestFood:
+            best_idx = i
+            break
+
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+    # For each state, we are going to generate a minimum spanning tree of the
+    # food positions. These trees are cached so that future states are easily
+    # recognizable, and so that future trees can be generated much faster when
+    # a single food has been eaten from a known tree.
+
+    if 'initial_food_grid' not in problem.heuristicInfo:
+        problem.heuristicInfo['initial_food_grid'] = foodGrid
+
+        # if 'tree_nodes' not in problem.heuristicInfo:
+
+        # Create a minimum spanning tree of the food positions.
+        # The keys in the tree_nodes hash are the food positions, and the
+        # values are hashes of the connected foods in the tree and their
+        # costs from the current node. All pointers are bi-directional.
+        tree_nodes = {}
+
+        tree_nodes[foods[best_idx]] = {}
+        del foods[best_idx]
+
+        tree_cost = 0
+        food_remaining = num_foods - 1  # we already added the first food to the tree
+
+        while food_remaining > 0:
+            explored_and_frontier = tree_nodes.keys()
+            frontier = [(food,  # current pos
+                         food  # the parent node
+                         ) for food in explored_and_frontier]
+
+            found_new_food = False
+            depth = 0
+            while len(frontier) > 0:
+                next_frontier = []
+                depth += 1
+
+                for food, parent in frontier:
+                    x, y = food
+                    # For each valid move, add the resulting positions to the frontier
+                    # if they have not already been observed.
+                    for dx, dy in directions:
+                        nextx, nexty = (x + dx), (y + dy)
+                        nextpos = (nextx, nexty)
+                        if not problem.walls[nextx][nexty]:
+                            if nextpos not in explored_and_frontier:
+                                if foodGrid[nextx][nexty]:
+                                    # depth = the minimum cost from the known food to the newly found food
+                                    tree_cost += depth
+                                    food_remaining -= 1
+                                    tree_nodes[nextpos] = {parent: depth}  # create a new tree node
+                                    tree_nodes[parent][nextpos] = depth  # add a pointer from the parent to the new node
+                                    found_new_food = True
+                                    break
+                                explored_and_frontier.append(nextpos)
+                                next_frontier.append((nextpos, parent))
+                    if found_new_food: break
+                if found_new_food: break
+                frontier = next_frontier
+
+        problem.heuristicInfo['states'] = {}
+        problem.heuristicInfo['states'][foodGrid] = {'tree_nodes': tree_nodes,
+                                                     'tree_cost': tree_cost}
+
+
+    elif foodGrid not in problem.heuristicInfo['states']:
+        # The food has disappeared where it previously existed at what is now 'position'.
+        # Delete this node from the existing tree, separate the tree into subtrees, and merge
+        # the subtrees into a new minimum spanning tree.
+
+        # Retrieve the most recent cached tree, which should only differ by one food.
+        cache_food_grid = foodGrid.copy()
+        cache_food_grid[position[0]][position[1]] = True  # restore state where food existed
+        cache = problem.heuristicInfo['states'][cache_food_grid]
+
+        # Delete the node and create the subtrees
+        import copy
+        tree_nodes = copy.deepcopy(cache['tree_nodes'])
+        tree_cost = cache['tree_cost']
+        root = tree_nodes[position]
+        del tree_nodes[position]
+        children = root.keys()
+
+        for child in children:
+            tree_cost -= tree_nodes[child][position]
+            del tree_nodes[child][position]
+
+        subtrees = []
+        for child in children:
+            subtree = [child]
+            frontier = [child]
+            while len(frontier) > 0:
+                food = frontier.pop()
+                for subchild in tree_nodes[food].keys():
+                    if subchild not in subtree:
+                        frontier.append(subchild)
+                        subtree.append(subchild)
+            subtrees.append(subtree)
+
+        # Merge the subtrees into a new minimum spanning tree, and update the total
+        # tree cost.
+        subtrees_remaining = len(subtrees)
+        while subtrees_remaining > 1:
+            explored_and_frontier = subtrees[0][:]
+            frontier = [(food,  # current pos
+                         food  # the parent node
+                         ) for food in explored_and_frontier]
+
+            found_new_food = False
+            depth = 0
+            while len(frontier) > 0:
+                next_frontier = []
+                depth += 1
+
+                for food, parent in frontier:
+                    x, y = food
+                    # For each valid move, add the resulting positions to the frontier
+                    # if they have not already been observed.
+                    for dx, dy in directions:
+                        nextx, nexty = (x + dx), (y + dy)
+                        nextpos = (nextx, nexty)
+                        if not problem.walls[nextx][nexty]:
+                            if nextpos not in explored_and_frontier:
+                                if foodGrid[nextx][nexty]:
+                                    # depth = the minimum cost from the known food to the newly found food
+                                    tree_cost += depth
+                                    subtrees_remaining -= 1
+
+                                    # We don't need to create any new nodes because they already exist.
+                                    # Instead, link the existing nodes together.
+                                    tree_nodes[parent][nextpos] = depth
+                                    tree_nodes[nextpos][parent] = depth
+
+                                    # Identify the subtree that owns the new food
+                                    for idx, subtree in enumerate(subtrees[1:]):
+                                        if nextpos in subtree: break
+                                    idx += 1
+
+                                    # Merge the subtrees
+                                    subtrees[0].extend(subtrees[idx])
+                                    del subtrees[idx]
+
+                                    found_new_food = True
+                                    break
+                                explored_and_frontier.append(nextpos)
+                                next_frontier.append((nextpos, parent))
+                    if found_new_food: break
+                if found_new_food: break
+                frontier = next_frontier
+                next_frontier = []
+
+        problem.heuristicInfo['states'][foodGrid] = {'tree_nodes': tree_nodes,
+                                                     'tree_cost': tree_cost}
+
+    return problem.heuristicInfo['states'][foodGrid]['tree_cost'] + position_cost
+
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
 
@@ -641,6 +1126,8 @@ class ClosestDotSearchAgent(SearchAgent):
         # util.raiseNotDefined()
         prob = AnyFoodSearchProblem(gameState)
         return search.bfs(prob)
+
+
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
