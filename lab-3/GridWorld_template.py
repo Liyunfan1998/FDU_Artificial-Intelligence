@@ -60,7 +60,7 @@ def construct_MDP(A_POS, A_TO_POS, A_REWARD, B_POS, B_TO_POS, B_REWARD):
 
 # value iteration
 def value_iteration(nextState, actionReward):# 伪代码里，参数是MDP(或者说States)，Action，Transition Model，Rewards和Discount
-    #我们现在有的参数是 nextState（包括了所有采取action的后继state）, actionReward（相对应的rewards）,Transition Model被固定为1，采取行动必然成功
+    #我们现在有的参数是 nextState， actionReward（包括了所有采取action的后继state）,（rewards行动代价为0）,Transition Model被固定为1，采取行动必然成功
     world = [[0 for _ in range(WORLD_SIZE)] for _ in range(WORLD_SIZE)]
     history_U_s = [] # MY CODE TO KEEP TRACK OF ITERATION
     while True:
@@ -68,7 +68,8 @@ def value_iteration(nextState, actionReward):# 伪代码里，参数是MDP(或�
         difference = 0
         ## Begin your code
         history_U_s.append(world.copy())
-        U_ = []
+        newWorld = world.copy()
+        # U_ = []
         policy # TODO: need to setup policy # LATER: (NO!)
         # initialize U' and U
         # ---- it seems that U and U_ is not calculated by using policy_evaluation
@@ -76,15 +77,22 @@ def value_iteration(nextState, actionReward):# 伪代码里，参数是MDP(或�
         #    U_.append(policy_evaluation(world,policy,nextState[i],actionReward[i]))
 
         # TODO: HAVE TO THINK HARDER WHAT THIS MEANS!!!
-        U = U_.copy()
+        # U = U_.copy()
 
-        for nstate in nextState:
-            idx = nextState.index(nstate)
-            state_reward # TODO: need to get state reward, I think it's somehow different from action reward
-            U_.append(state_reward+ discount * U[idx])
-            if U_[idx]-U[idx] > difference: # ABS or not
-                difference = U_[idx]-U[idx]
-		## End your code
+        for i in range(5):
+            for j in range(5):
+                state_reward # TODO: need to get state reward, I think it's somehow different from action reward
+                #idx = U.index(max(U)) # find the s'(also indicates the action taken) which is argmax to U
+                #U_.append(state_reward + discount * world[i][j])
+                for action in actionReward[i][j]:
+                    state_reward.append(actionReward[i][j][action])
+                state_reward.index(max(state_reward))
+                newWorld[i][j] = 0 + discount * max(state_reward)
+                abs_diff = abs(newWorld[i][j] - world[i][j])
+                if abs_diff > difference: # ABS
+                    difference = abs_diff
+        world = newWorld
+        ## End your code
 
 		# keep iteration until convergence
         if difference < 1e-4:
@@ -121,6 +129,14 @@ def policy_iteration(nextState, actionReward):
         for i in len(nextState):
             U.append(policy_evaluation(world, policy, nextState[i], actionReward[i]))
         unchanged = True
+        for i in range(5):
+            for j in range(5):
+                state_reward # TODO: need to get state reward, I think it's somehow different from action reward
+                idx = U.index(max(U)) # find the s'(also indicates the action taken) which is argmax to U
+                U_.append(state_reward + discount * U[idx])
+                if U_[idx]-U[idx] > difference: # ABS or not
+                    difference = U_[idx]-U[idx]
+
         for nstate in nextState:
             idx = nextState.index(nstate)
             currentStrategy = []
