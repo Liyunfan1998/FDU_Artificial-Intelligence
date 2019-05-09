@@ -83,11 +83,11 @@ def value_iteration(nextState, actionReward):  # 伪代码里，参数是MDP(或
                     if Us_ > max:
                         max = Us_
                         argmax = action
-                newWorld[i][j] = discount * Us_
-                abs_diff = abs(newWorld[i][j] - world[i][j])
+                abs_diff = abs(max - world[i][j])
                 if abs_diff > difference:  # ABS
                     difference = abs_diff
-        world = newWorld
+                # difference += abs_diff
+                world[i][j] = max
         ## End your code
 
         # keep iteration until convergence
@@ -109,11 +109,12 @@ def policy_evaluation(world, policy, nextState, actionReward):
                 policy_action = actions[actionidx]
                 next_stateX = nextState[i][j][policy_action][0]
                 next_stateY = nextState[i][j][policy_action][1]
-                new_v = actionReward[i][j][policy_action] + discount * world[next_stateX][next_stateY]
-                abs_diff = abs(newWorld[i][j] - world[i][j])
+                policy_value = actionReward[i][j][policy_action] + discount * world[next_stateX][next_stateY]
+                abs_diff = abs(policy_value - world[i][j])
                 if abs_diff > difference:  # ABS
                     difference = abs_diff
-                world[i][j] = new_v
+                # difference += abs_diff
+                world[i][j] = policy_value
             ## End your code
 
         if difference < 1e-4:
